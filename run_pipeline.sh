@@ -67,13 +67,15 @@ for INFILE in "${INPUT_FILES[@]}"; do
         --out "$RAW_DIR/output.txt"
     PREV_OUT="$RAW_DIR/output.txt"
 
+
   else
     echo "dumb_pre_v2.py not found, skipping. Using input file as is."
     PREV_OUT="$INPATH"
   fi
 
   echo "=== [$BASENAME] [1] BWT transform (crux2) ==="
-  python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR"
+  #python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR"
+  python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR" --chunk-mode bytes --chunk-size 64000
 
 
   echo "=== [$BASENAME] [2] MTF transform (crux2) ==="
