@@ -32,6 +32,24 @@ Modular, open corpus compression for the LLM era.
 ---
 
 
+### API Table: Inputs, Outputs, Entrypoints
+
+(For doc/README clarity, keep current; add CLI/params as you finalize)
+| Module     | Entrypoint/Script     | Input(s)              | Output(s)              | Notes                |
+| ---------- | --------------------- | --------------------- | ---------------------- | -------------------- |
+| dumb\_pre  | dumb\_pre.py / redumb | raw\.txt              | dict.txt, out.txt      | Baseline reversible  |
+| cc\_nlp    | proc\_post.py         | dicts/                | .bwtmtf.txt, .meta.npz | Mocked crux postproc |
+| ngram-pos  | aggregate.py          | .bwtmtf.txt           | .npz, .tsv             | N-gram sweep/agg     |
+| cc\_nlp    | ngram\_analyzer.py    | .tsv                  | codebook.json          | Semantic grouping    |
+| cc\_nlp    | replace\_ngrams.py    | ngram\_db, input\_dir | output\_dir            | N-gram replacement   |
+| ngram-dawg | runner.py             | token files           | .edgelist, .order.npy  | DAWG build/export    |
+| crux       | crux.py               | token streams         | transformed streams    | Custom & transforms  |
+| core       | bench\_logger.py      | output\_dir           | .tsv/.json logs        | Benchmarking/summary |
+| ...        | ...                   | ...                   | ...                    | ...                  |
+
+
+---
+
 ## 🔧 Planned Modules (Roadmap/Insertion Points)
 
 - **dumb_pre**  
