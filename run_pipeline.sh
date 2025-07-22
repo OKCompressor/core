@@ -1,6 +1,6 @@
 #!/bin/bash
 # OKCompressor Modular Pipeline Launcher (fully parametric, per-file)
-set -e
+set -ex
 
 MOD_DIR="modules"
 INPUT_FOLDER="data"
@@ -68,7 +68,7 @@ for INFILE in "${INPUT_FILES[@]}"; do
 
   echo "=== [$BASENAME] [0] Optional: Preprocess Raw Input (dumb_pre) ==="
   if [ -f "$MOD_DIR/dumb_pre/dumb_pre_v2.py" ]; then
-    python $MOD_DIR/dumb_pre/dumb_pre_v2.py \
+    time python $MOD_DIR/dumb_pre/dumb_pre_v2.py \
         --input "$INPATH" \
         --dict "$RAW_DIR/dict.txt" \
         --out "$RAW_DIR/output.txt"
@@ -79,18 +79,53 @@ for INFILE in "${INPUT_FILES[@]}"; do
     echo "dumb_pre_v2.py not found, skipping. Using input file as is."
     PREV_OUT="$INPATH"
   fi
+  
+  
+  ## ccnlp cats needs to proc files here
+  # then it gens subidxs and dict per cat: commons and uniqs
+  # chunked_encode.py
+  # CC-NLP Compression Pipeline
+# /*
+# A simple, frequency-aware token compressor built on top of a “dumb” tokenization of enwik8:
 
-  echo "=== [$BASENAME] [1] BWT transform (crux2) ==="
-  #python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR"
-  python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR" --chunk-mode bytes --chunk-size 32000
+# - **Input**:  
+#   - `enwik8` raw text  
+#   - Precomputed token IDs + dictionary (via `okc.dumb` or Rust-port `redumb` / `dumb_pre`)  
+# - **Output** (`output/`):  
+#   - **Per-category globals**:  
+#     - `cat0_commons.txt` & `cat0_uniqs.txt`  
+#     - `cat1_commons.txt` & `cat1_uniqs.txt`  
+#     - `cat2_commons.txt` & `cat2_uniqs.txt`  
+#     - `cat3_commons.txt` & `cat3_uniqs.txt`  
+#   - **Chunked streams** (1 M tokens each):  
+#     - `cats_{offset}.base4` + `.n` (packed 2-bit/category)  
+#     - `sub_idxs_{offset}.npy` (uint32 sub-index per token)  
+
+# When compressed (7z), the entire `output/` folder clocks in at **≈ 29.6 MB** for the full 100 M-byte enwik8 dataset.
+
+# ---
+# */
+# # adjusst accordingly so on, mb time  to do the py script version
+
+
+  
 
 # will need to plug rust crux1 versioooon port WIP
+  echo "=== [$BASENAME] [1] BWT transform (crux2) ==="
+  #python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR"
+  time python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR" --chunk-mode bytes --chunk-size 32000
+
   echo "=== [$BASENAME] [2] MTF transform (crux2) ==="
   python $MOD_DIR/crux2/crux2_mtf.py --input "$BWT_DIR" --output "$MTF_DIR" --alphabet_mode global
 
+echo "+++ crux2::rle +++"
+python $MOD_DIR/crux2/crux2_rle.py \
+    --input "$MTF_DIR/output.mtf.txt" \
+    --output "$MTF_DIR/output.mtf.rle.txt"
+
   echo "=== [$BASENAME] [3] Aggregate n-grams (ngram-pos) ==="
   #python $MOD_DIR/ngram-pos/aggregate.py --indir "$MTF_DIR" --mode nsweep --n_max 9 --n_min 4 --min_freq 3 --output "$NGRAMS_DIR/ngrams_dicts.npz" --sqlite_db "$NGRAMS_DIR/ngrams_temp.db"
-  python $MOD_DIR/ngram-pos/aggregate.py --indir ./output/enwik7/02_mtf --pattern "*.mtf.txt" --n_max 7 --n_min 2 --output ./output/enwik7/03_ngrams/ngrams_dicts.npz --sqlite_db ./output/enwik7/03_ngrams/ngrams_temp.db
+  time python $MOD_DIR/ngram-pos/aggregate.py --indir ./output/enwik7/02_mtf --pattern "*.mtf.rle.txt" --n_max 13 --n_min 3 --output ./output/enwik7/03_ngrams/ngrams_dicts.npz --sqlite_db ./output/enwik7/03_ngrams/ngrams_temp.db
 
 
   # echo "=== [$BASENAME] [4] N-gram Analyzer (Semantic/Similarity Grouping) ==="
@@ -110,7 +145,7 @@ for INFILE in "${INPUT_FILES[@]}"; do
     --ngram_db "$DB" \
     --final_codebook_txt "$CODEBOOK_TXT" \
     --final_codebook_npz "$CODEBOOK_NPZ" \
-    --min_freq 3 \
+    --min_freq 7 \
     --start_code 1_000_000 \
     --pattern "*.mtf.txt"   # or "sub_idxs_*.npy" as needed
   else
