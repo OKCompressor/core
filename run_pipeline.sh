@@ -1,16 +1,22 @@
 #!/bin/bash
-# OKCompressor Modular Pipeline Launcher (fully parametric, per-file)
+# OKCompressor Modular Pipeline Launcher (Luna-vetted, toggleable, tidy, minimal-archive)
 set -ex
+
+########## PIPELINE TOGGLES ##########
+DO_BWT=1
+DO_MTF=1
+DO_RLE=1
+CLEANUP_TMP=1
+######################################
 
 MOD_DIR="modules"
 INPUT_FOLDER="data"
 mkdir -p "$MOD_DIR" "$INPUT_FOLDER"
 
-# Add .gitignore entries if missing
+# Ensure .gitignore hygiene
 for entry in modules/ output/ data/; do
   if ! grep -qx "$entry" .gitignore 2>/dev/null; then
     echo "$entry" >> .gitignore
-    echo "Added '$entry' to .gitignore"
   fi
 done
 
@@ -23,155 +29,168 @@ declare -A repos=(
   ["crux2"]="git@github.com:GreenIshHat/crux2.git"
   ["core"]="git@github.com:OKCompressor/core.git"
 )
-
 for dir in "${!repos[@]}"; do
   if [ ! -d "$MOD_DIR/$dir" ]; then
-    echo "Cloning $dir..."
     git clone "${repos[$dir]}" "$MOD_DIR/$dir"
   fi
 done
 
-# === Inputs (list one or more, extensionless or with .txt)
-INPUT_FILES=("enwik7")  # Edit as needed
+INPUT_FILES=("enwik6")  # Edit as needed
 
 for INFILE in "${INPUT_FILES[@]}"; do
   INPATH="$INPUT_FOLDER/$INFILE"
-  if [ ! -f "$INPATH" ]; then
-    if [ -f "$INPATH.txt" ]; then
-      INPATH="$INPATH.txt"
-    else
-      echo "[ERROR] Input file '$INPATH' (or .txt) not found in $INPUT_FOLDER/"
-      exit 1
-    fi
+  if [ ! -f "$INPATH" ] && [ -f "$INPATH.txt" ]; then
+    INPATH="$INPATH.txt"
   fi
+  if [ ! -f "$INPATH" ]; then
+    echo "[ERROR] Input file '$INPATH' (or .txt) not found in $INPUT_FOLDER/"
+    exit 1
+  fi
+
   BASENAME=$(basename "$INFILE" .txt)
   OUTBASE="output/$BASENAME"
-  mkdir -p "$OUTBASE"
 
   RAW_DIR="$OUTBASE/00_dumb"
+  NGRAMS_DIR="$OUTBASE/03_ngrams"
+  CCNLP_OUT="$OUTBASE/ccnlp"
   BWT_DIR="$OUTBASE/01_bwt"
   MTF_DIR="$OUTBASE/02_mtf"
-  NGRAMS_DIR="$OUTBASE/03_ngrams"
-  
+  REPLACED_DIR="$OUTBASE/04_replaced"
+  FINAL_DIR="$OUTBASE/99_final"
+  DAWG_DIR="$OUTBASE/05_dawg"
+  BENCH_LOG="$OUTBASE/benchmarks.tsv"
+  ARCHIVE="$OUTBASE/compressed.7z"
   DB="$NGRAMS_DIR/ngrams_temp.db"
   CODEBOOK_TXT="$NGRAMS_DIR/ngram_used_codebook.txt"
   CODEBOOK_NPZ="$NGRAMS_DIR/ngram_used_codebook.npz"
 
-  REPLACED_DIR="$OUTBASE/04_replaced"
-  DAWG_DIR="$OUTBASE/05_dawg"
-  BENCH_LOG="$OUTBASE/benchmarks.tsv"
-  ARCHIVE="$OUTBASE/compressed.7z"
+  mkdir -p "$RAW_DIR" "$CCNLP_OUT" "$NGRAMS_DIR" "$REPLACED_DIR" "$FINAL_DIR" "$DAWG_DIR"
 
-
-
-  mkdir -p "$RAW_DIR" "$BWT_DIR" "$MTF_DIR" "$NGRAMS_DIR" "$REPLACED_DIR" "$DAWG_DIR"
-
-  echo "=== [$BASENAME] [0] Optional: Preprocess Raw Input (dumb_pre) ==="
+  #### [0] Dumb Preprocessing ####
+  echo "=== [$BASENAME] [0] Preprocess (dumb_pre) ==="
   if [ -f "$MOD_DIR/dumb_pre/dumb_pre_v2.py" ]; then
-    time python $MOD_DIR/dumb_pre/dumb_pre_v2.py \
-        --input "$INPATH" \
-        --dict "$RAW_DIR/dict.txt" \
-        --out "$RAW_DIR/output.txt"
+    python "$MOD_DIR/dumb_pre/dumb_pre_v2.py" \
+      --input "$INPATH" \
+      --dict "$RAW_DIR/dict.txt" \
+      --out "$RAW_DIR/output.txt"
     PREV_OUT="$RAW_DIR/output.txt"
-
-
   else
-    echo "dumb_pre_v2.py not found, skipping. Using input file as is."
+    echo "[Luna] dumb_pre_v2.py not found, using input as-is."
     PREV_OUT="$INPATH"
   fi
-  
-  
-  ## ccnlp cats needs to proc files here
-  # then it gens subidxs and dict per cat: commons and uniqs
-  # chunked_encode.py
-  # CC-NLP Compression Pipeline
-# /*
-# A simple, frequency-aware token compressor built on top of a “dumb” tokenization of enwik8:
 
-# - **Input**:  
-#   - `enwik8` raw text  
-#   - Precomputed token IDs + dictionary (via `okc.dumb` or Rust-port `redumb` / `dumb_pre`)  
-# - **Output** (`output/`):  
-#   - **Per-category globals**:  
-#     - `cat0_commons.txt` & `cat0_uniqs.txt`  
-#     - `cat1_commons.txt` & `cat1_uniqs.txt`  
-#     - `cat2_commons.txt` & `cat2_uniqs.txt`  
-#     - `cat3_commons.txt` & `cat3_uniqs.txt`  
-#   - **Chunked streams** (1 M tokens each):  
-#     - `cats_{offset}.base4` + `.n` (packed 2-bit/category)  
-#     - `sub_idxs_{offset}.npy` (uint32 sub-index per token)  
+  #### [1] CC-NLP Category Chunking ####
+  echo "=== [$BASENAME] [1] CC-NLP Category Chunking ==="
+  if [ -f "$MOD_DIR/cc_nlp/chunked_encode.py" ]; then
+    python "$MOD_DIR/cc_nlp/chunked_encode.py" \
+      --dumb_path "$RAW_DIR" \
+      --dict_file "dict.txt" \
+      --pos_file "output.txt" \
+      --outdir "$CCNLP_OUT" \
+      --chunk_size 1000000
+  else
+    echo "[Luna] chunked_encode.py not found, skipping CC-NLP chunking."
+  fi
 
-# When compressed (7z), the entire `output/` folder clocks in at **≈ 29.6 MB** for the full 100 M-byte enwik8 dataset.
-
-# ---
-# */
-# # adjusst accordingly so on, mb time  to do the py script version
+  #### [2] N-gram Aggregation (CC-NLP subidx) ####
+  echo "=== [$BASENAME] [2] Aggregate n-grams (ngram-pos, CC-NLP) ==="
+  python $MOD_DIR/ngram-pos/aggregate.py \
+    --indir "$CCNLP_OUT" \
+    --pattern "sub_idxs_*.npy" \
+    --n_max 13 \
+    --n_min 3 \
+    --output "$NGRAMS_DIR/ngrams_dicts.npz" \
+    --sqlite_db "$NGRAMS_DIR/ngrams_temp.db"
 
 
-  
 
-# will need to plug rust crux1 versioooon port WIP
-  echo "=== [$BASENAME] [1] BWT transform (crux2) ==="
-  #python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR"
-  time python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR" --chunk-mode bytes --chunk-size 32000
-
-  echo "=== [$BASENAME] [2] MTF transform (crux2) ==="
-  python $MOD_DIR/crux2/crux2_mtf.py --input "$BWT_DIR" --output "$MTF_DIR" --alphabet_mode global
-
-echo "+++ crux2::rle +++"
-python $MOD_DIR/crux2/crux2_rle.py \
-    --input "$MTF_DIR/output.mtf.txt" \
-    --output "$MTF_DIR/output.mtf.rle.txt"
-
-  echo "=== [$BASENAME] [3] Aggregate n-grams (ngram-pos) ==="
-  #python $MOD_DIR/ngram-pos/aggregate.py --indir "$MTF_DIR" --mode nsweep --n_max 9 --n_min 4 --min_freq 3 --output "$NGRAMS_DIR/ngrams_dicts.npz" --sqlite_db "$NGRAMS_DIR/ngrams_temp.db"
-  time python $MOD_DIR/ngram-pos/aggregate.py --indir ./output/enwik7/02_mtf --pattern "*.mtf.rle.txt" --n_max 13 --n_min 3 --output ./output/enwik7/03_ngrams/ngrams_dicts.npz --sqlite_db ./output/enwik7/03_ngrams/ngrams_temp.db
-
-
-  # echo "=== [$BASENAME] [4] N-gram Analyzer (Semantic/Similarity Grouping) ==="
-  # if [ -f "$MOD_DIR/cc_nlp/ngram_analyzer.py" ]; then
-  #   python $MOD_DIR/cc_nlp/ngram_analyzer.py --freqs "$NGRAMS_DIR/ngrams_dicts.tsv" --out "$NGRAMS_DIR/codebook.json" --split-mode elbow --edit-cluster
-  # else
-  #   echo "ngram_analyzer.py not found, skipping this stage."
-  # fi
-
-  echo "=== [$BASENAME] [5] Replace n-grams with codebook ==="
+  #### [3] N-gram Replacement (CC-NLP) ####
+  echo "=== [$BASENAME] [3] Replace n-grams with codebook ==="
   if [ -f "$MOD_DIR/ngram-pos/replace_ngrams.py" ]; then
-    # python $MOD_DIR/ngram-pos/replace_ngrams.py --ngram_db "$NGRAMS_DIR/ngrams_temp.db" --input_dir "$MTF_DIR" --output_dir "$REPLACED_DIR"
-    # N-gram replacement (now flexible)
     python $MOD_DIR/ngram-pos/replace_ngrams.py \
-    --input_dir "$MTF_DIR" \
-    --output_dir "$REPLACED_DIR" \
-    --ngram_db "$DB" \
-    --final_codebook_txt "$CODEBOOK_TXT" \
-    --final_codebook_npz "$CODEBOOK_NPZ" \
-    --min_freq 7 \
-    --start_code 1_000_000 \
-    --pattern "*.mtf.txt"   # or "sub_idxs_*.npy" as needed
+      --input_dir "$CCNLP_OUT" \
+      --output_dir "$REPLACED_DIR" \
+      --ngram_db "$DB" \
+      --final_codebook_txt "$CODEBOOK_TXT" \
+      --final_codebook_npz "$CODEBOOK_NPZ" \
+      --min_freq 7 \
+      --start_code 1000000 \
+      --pattern "sub_idxs_*.npy"
   else
-    echo "replace_ngrams.py not found, skipping this stage."
+    echo "[Luna] replace_ngrams.py not found, skipping n-gram replacement."
   fi
 
-  echo "=== [$BASENAME] [6] (Optional) DAWG Build ==="
-  if [ -f "$MOD_DIR/ngram-dawg/runner.py" ]; then
-    python modules/ngram-dawg/runner.py \
-  --dicts "output/enwik7/04_replaced/*.txt" \
-  --outdir "output/enwik7/05_dawg"
 
-  else
-    echo "runner.py not found in ngram-dawg, skipping DAWG build."
+# add aggregator + replace step for only 2 n-grams check worth as weight len x freq vs dict entrie len
+
+  #### [4] BWT/MTF/RLE (post-ngram, each replaced chunk) ####
+for f in $REPLACED_DIR/repl_subidx_*.npy; do
+  [ -e "$f" ] || continue  # skip if no match
+  fn=$(basename "$f" .npy)
+  TMP_BWT="$FINAL_DIR/${fn}.bwt.txt"
+  TMP_MTF="$FINAL_DIR/${fn}.bwtmtf.txt"
+  OUT_RLE="$FINAL_DIR/${fn}_bwtmtfrle.txt"
+
+  if (( DO_BWT )); then
+    python $MOD_DIR/crux2/crux2_bwt.py --input "$f" --output "$TMP_BWT"
   fi
+  if (( DO_MTF )); then
+    python $MOD_DIR/crux2/crux2_mtf.py --input "$TMP_BWT" --output "$TMP_MTF" --alphabet_mode global
+  fi
+  if (( DO_RLE )); then
+    python $MOD_DIR/crux2/crux2_rle.py --input "$TMP_MTF" --output "$OUT_RLE"
+  fi
+  if (( CLEANUP_TMP )); then
+    rm -f "$TMP_BWT" "$TMP_MTF"
+  fi
+done
 
-  echo "=== [$BASENAME] [7] Compress for benchmarking (7z) ==="
-  7z a -mx=9 "$ARCHIVE" "$MTF_DIR"/*.txt
 
-  echo "=== [$BASENAME] [8] Log Benchmark Results ==="
+echo "=== [$BASENAME] [7] Dicts: BWT→MTF→RLE ==="
+DICT_FINAL_DIR="$OUTBASE/99_dicts_final"
+mkdir -p "$DICT_FINAL_DIR"
+
+# For every commons/uniqs dict in the CCNLP output
+for f in "$CCNLP_OUT"/cat*_*.txt; do
+  [ -f "$f" ] || continue
+  flat="$DICT_FINAL_DIR/$(basename "${f%.txt}").flat.txt"
+  bwt="$DICT_FINAL_DIR/$(basename "${f%.txt}").bwt.txt"
+  mtf="$DICT_FINAL_DIR/$(basename "${f%.txt}").bwtmtf.txt"
+  rle="$DICT_FINAL_DIR/$(basename "${f%.txt}")_bwtmtfrle.txt"
+
+  # 1. Flatten to a single line (space-separated)
+  paste -sd ' ' "$f" > "$flat"
+
+  # 2. BWT
+  python $MOD_DIR/crux2/crux2_bwt.py --input "$flat" --output "$bwt"
+
+  # 3. MTF
+  python $MOD_DIR/crux2/crux2_mtf.py --input "$bwt" --output "$mtf"
+
+  # 4. RLE
+  python $MOD_DIR/crux2/crux2_rle.py --input "$mtf" --output "$rle"
+done
+
+
+  #### [5] Minimal Archive (final output) ####
+  echo "=== [$BASENAME] [5] Compress for benchmarking (7z, minimal set) ==="
+  7z a -mx=9 "$ARCHIVE" \
+    "$FINAL_DIR"/*_bwtmtfrle.txt \
+    "$CCNLP_OUT"/cats_*.base4 \
+
+    # "$CCNLP_OUT"/cat*_commons.txt \
+    # "$CCNLP_OUT"/cat*_uniqs.txt \
+    "$DICT_FINAL_DIR"/*_bwtmtfrle.txt \
+
+    "$CODEBOOK_TXT"
+
+  #### [6] (Optional) Log Benchmark Results ####
+  echo "=== [$BASENAME] [6] Log Benchmark Results ==="
   if [ -f "$MOD_DIR/core/bench_logger.py" ]; then
-    python $MOD_DIR/core/bench_logger.py --indir "$REPLACED_DIR" --out "$BENCH_LOG"
+    python $MOD_DIR/core/bench_logger.py --indir "$FINAL_DIR" --out "$BENCH_LOG"
   else
-    echo "bench_logger.py not found, skipping benchmark log."
+    echo "[Luna] bench_logger.py not found, skipping benchmark log."
   fi
 
   echo "=== [$BASENAME] Pipeline finished successfully ==="
-
 done
