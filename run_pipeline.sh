@@ -52,10 +52,17 @@ for INFILE in "${INPUT_FILES[@]}"; do
   BWT_DIR="$OUTBASE/01_bwt"
   MTF_DIR="$OUTBASE/02_mtf"
   NGRAMS_DIR="$OUTBASE/03_ngrams"
+  
+  DB="$NGRAMS_DIR/ngrams_temp.db"
+  CODEBOOK_TXT="$NGRAMS_DIR/ngram_used_codebook.txt"
+  CODEBOOK_NPZ="$NGRAMS_DIR/ngram_used_codebook.npz"
+
   REPLACED_DIR="$OUTBASE/04_replaced"
   DAWG_DIR="$OUTBASE/05_dawg"
   BENCH_LOG="$OUTBASE/benchmarks.tsv"
   ARCHIVE="$OUTBASE/compressed.7z"
+
+
 
   mkdir -p "$RAW_DIR" "$BWT_DIR" "$MTF_DIR" "$NGRAMS_DIR" "$REPLACED_DIR" "$DAWG_DIR"
 
@@ -75,25 +82,37 @@ for INFILE in "${INPUT_FILES[@]}"; do
 
   echo "=== [$BASENAME] [1] BWT transform (crux2) ==="
   #python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR"
-  python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR" --chunk-mode bytes --chunk-size 64000
+  python $MOD_DIR/crux2/crux2_bwt.py --input "$PREV_OUT" --output "$BWT_DIR" --chunk-mode bytes --chunk-size 32000
 
-
+# will need to plug rust crux1 versioooon port WIP
   echo "=== [$BASENAME] [2] MTF transform (crux2) ==="
   python $MOD_DIR/crux2/crux2_mtf.py --input "$BWT_DIR" --output "$MTF_DIR" --alphabet_mode global
 
   echo "=== [$BASENAME] [3] Aggregate n-grams (ngram-pos) ==="
-  python $MOD_DIR/ngram-pos/aggregate.py --indir "$MTF_DIR" --mode nsweep --n_max 9 --n_min 4 --min_freq 3 --output "$NGRAMS_DIR/ngrams_dicts.npz" --sqlite_db "$NGRAMS_DIR/ngrams_temp.db"
+  #python $MOD_DIR/ngram-pos/aggregate.py --indir "$MTF_DIR" --mode nsweep --n_max 9 --n_min 4 --min_freq 3 --output "$NGRAMS_DIR/ngrams_dicts.npz" --sqlite_db "$NGRAMS_DIR/ngrams_temp.db"
+  python $MOD_DIR/ngram-pos/aggregate.py --indir ./output/enwik7/02_mtf --pattern "*.mtf.txt" --n_max 7 --n_min 2 --output ./output/enwik7/03_ngrams/ngrams_dicts.npz --sqlite_db ./output/enwik7/03_ngrams/ngrams_temp.db
 
-  echo "=== [$BASENAME] [4] N-gram Analyzer (Semantic/Similarity Grouping) ==="
-  if [ -f "$MOD_DIR/cc_nlp/ngram_analyzer.py" ]; then
-    python $MOD_DIR/cc_nlp/ngram_analyzer.py --freqs "$NGRAMS_DIR/ngrams_dicts.tsv" --out "$NGRAMS_DIR/codebook.json" --split-mode elbow --edit-cluster
-  else
-    echo "ngram_analyzer.py not found, skipping this stage."
-  fi
+
+  # echo "=== [$BASENAME] [4] N-gram Analyzer (Semantic/Similarity Grouping) ==="
+  # if [ -f "$MOD_DIR/cc_nlp/ngram_analyzer.py" ]; then
+  #   python $MOD_DIR/cc_nlp/ngram_analyzer.py --freqs "$NGRAMS_DIR/ngrams_dicts.tsv" --out "$NGRAMS_DIR/codebook.json" --split-mode elbow --edit-cluster
+  # else
+  #   echo "ngram_analyzer.py not found, skipping this stage."
+  # fi
 
   echo "=== [$BASENAME] [5] Replace n-grams with codebook ==="
-  if [ -f "$MOD_DIR/cc_nlp/replace_ngrams.py" ]; then
-    python $MOD_DIR/cc_nlp/replace_ngrams.py --ngram_db "$NGRAMS_DIR/ngrams_temp.db" --input_dir "$MTF_DIR" --output_dir "$REPLACED_DIR"
+  if [ -f "$MOD_DIR/ngram-pos/replace_ngrams.py" ]; then
+    # python $MOD_DIR/ngram-pos/replace_ngrams.py --ngram_db "$NGRAMS_DIR/ngrams_temp.db" --input_dir "$MTF_DIR" --output_dir "$REPLACED_DIR"
+    # N-gram replacement (now flexible)
+    python $MOD_DIR/ngram-pos/replace_ngrams.py \
+    --input_dir "$MTF_DIR" \
+    --output_dir "$REPLACED_DIR" \
+    --ngram_db "$DB" \
+    --final_codebook_txt "$CODEBOOK_TXT" \
+    --final_codebook_npz "$CODEBOOK_NPZ" \
+    --min_freq 3 \
+    --start_code 1_000_000 \
+    --pattern "*.mtf.txt"   # or "sub_idxs_*.npy" as needed
   else
     echo "replace_ngrams.py not found, skipping this stage."
   fi

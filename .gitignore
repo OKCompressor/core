@@ -3,3 +3,5 @@ output*/
 data/
 *.dboutput/
 output/
+
+ngram_used_codebook.txt
