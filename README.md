@@ -3,30 +3,30 @@
 Modular, open corpus compression for the LLM era.
 
 
-/OKCompressor
-  /core           # Orchestration, main scripts, API/readme, entrypoint
-  /dumb_pre       # Baseline reversible word tokenization/dicts
-  /redumb         # Rust-based, WIP, dumb_pre
-  /ngram-pos      # N-gram positional tools
-  /cc_nlp         # NLP & AI transforms, DAWG, codebook
-	/ngram-dawg     # Modular DAWG & automata toolkit
-	/rengrams       # Rust n-grams/faster routines
-
-  /crux           # Custom compression transforms (BWT, MTF, etc.)
-
-  /stego          # Steganography/watermarking layers (R&D)
-  /mapper         # Symbol remapping, index management
-  /cypher	  # pgp, aes per file/block for now. cc_PQC later. FHE.
-
-	/mDAWG          # Multi-level DAWG
-	/nGPE           # Next-gen prefix encoding (future/experimental)
-
-  /ranking        # Token/symbol ranking modules
-
-  /entrop         # Entropy coding: rANS/ANS/constriction hooks
-
-
-* /pLM 		  # pseudo LM, statistical word models from the ngrams of OKC
+	/OKCompressor
+	  /core           # Orchestration, main scripts, API/readme, entrypoint
+	  /dumb_pre       # Baseline reversible word tokenization/dicts
+	  /redumb         # Rust-based, WIP, dumb_pre
+	  /ngram-pos      # N-gram positional tools
+	  /cc_nlp         # NLP & AI transforms, DAWG, codebook
+		/ngram-dawg     # Modular DAWG & automata toolkit
+		/rengrams       # Rust n-grams/faster routines
+	
+	  /crux           # Custom compression transforms (BWT, MTF, etc.)
+	
+	  /stego          # Steganography/watermarking layers (R&D)
+	  /mapper         # Symbol remapping, index management
+	  /cypher	  # pgp, aes per file/block for now. cc_PQC later. FHE.
+	
+		/mDAWG          # Multi-level DAWG
+		/nGPE           # Next-gen prefix encoding (future/experimental)
+	
+	  /ranking        # Token/symbol ranking modules
+	
+	  /entrop         # Entropy coding: rANS/ANS/constriction hooks
+	
+	
+	* /pLM 		  # pseudo LM, statistical word models from the ngrams of OKC
 
 
 ---
