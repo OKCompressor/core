@@ -87,7 +87,7 @@ for INFILE in INPUT_FILES:
              "--chunk_size", "1000000"])
 
     # [2] N-gram aggregation
-    run(["python", f"{MOD_DIR}/ngram-pos/aggregate.py",
+    run(["python", f"{MOD_DIR}/ngram_pos/aggregate.py",
          "--indir", CCNLP_OUT,
          "--pattern", "sub_idxs_*.npy",
          "--n_max", "13", "--n_min", "3",
@@ -95,7 +95,7 @@ for INFILE in INPUT_FILES:
          "--sqlite_db", f"{NGRAMS_DIR}/ngrams_temp.db"])
 
     # [3] Replace n-grams
-    run(["python", f"{MOD_DIR}/ngram-pos/replace_ngrams.py",
+    run(["python", f"{MOD_DIR}/ngram_pos/replace_ngrams.py",
          "--input_dir", CCNLP_OUT,
          "--output_dir", f"{OUTBASE}/04_replaced",
          "--ngram_db", f"{NGRAMS_DIR}/ngrams_temp.db",

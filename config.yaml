@@ -14,7 +14,7 @@ input_files:
 repos:
   dumb_pre: git@github.com:OKCompressor/dumb_pre.git
   redumb: git@github.com:OKCompressor/redumb.git
-  ngram-pos: git@github.com:GreenIshHat/ngram-pos.git
+  ngram_pos: git@github.com:GreenIshHat/ngram_pos.git
   cc_nlp: git@github.com:GreenIshHat/cc_nlp.git
   ngram-dawg: git@github.com:GreenIshHat/ngram-dawg.git
   crux2: git@github.com:GreenIshHat/crux2.git
@@ -27,6 +27,7 @@ repos:
 #   start_code: 1000000
 
 ngram_passes:
+  - { n_max: 37, n_min: 14, min_freq: 7, start_code: 11000000 }   # Zero pass: high to mid n-grams
   - { n_max: 13, n_min: 4, min_freq: 7, start_code: 1000000 }   # First pass: high to mid n-grams
   - { n_max: 3, n_min: 2, min_freq: 7, start_code: 2000000 }    # Second pass: short n-grams
 

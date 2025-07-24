@@ -6,7 +6,7 @@ def step_ngram_aggregate(config, infile, ccnlp_out):
     output_folder = config['output_folder']
     ngrams_dir = os.path.join(output_folder, infile, "03_ngrams")
     ensure_dirs(ngrams_dir)
-    script = os.path.join(modules_dir, "ngram-pos", "aggregate.py")
+    script = os.path.join(modules_dir, "ngram_pos", "aggregate.py")
     output_npz = os.path.join(ngrams_dir, "ngrams_dicts.npz")
     output_db = os.path.join(ngrams_dir, "ngrams_temp.db")
     args = {

@@ -7,7 +7,7 @@ Modular, open corpus compression for the LLM era.
 	  /core           # Orchestration, main scripts, API/readme, entrypoint
 	  /dumb_pre       # Baseline reversible word tokenization/dicts
 	  /redumb         # Rust-based, WIP, dumb_pre
-	  /ngram-pos      # N-gram positional tools
+	  /ngram_pos      # N-gram positional tools
 	  /cc_nlp         # NLP & AI transforms, DAWG, codebook
 		/ngram-dawg     # Modular DAWG & automata toolkit
 		/rengrams       # Rust n-grams/faster routines
@@ -39,7 +39,7 @@ Modular, open corpus compression for the LLM era.
 | ---------- | --------------------- | --------------------- | ---------------------- | -------------------- |
 | dumb\_pre  | dumb\_pre.py / redumb | raw\.txt              | dict.txt, out.txt      | Baseline reversible  |
 | cc\_nlp    | proc\_post.py         | dicts/                | .bwtmtf.txt, .meta.npz | Mocked crux postproc |
-| ngram-pos  | aggregate.py          | .bwtmtf.txt           | .npz, .tsv             | N-gram sweep/agg     |
+| ngram_pos  | aggregate.py          | .bwtmtf.txt           | .npz, .tsv             | N-gram sweep/agg     |
 | cc\_nlp    | ngram\_analyzer.py    | .tsv                  | codebook.json          | Semantic grouping    |
 | cc\_nlp    | replace\_ngrams.py    | ngram\_db, input\_dir | output\_dir            | N-gram replacement   |
 | ngram-dawg | runner.py             | token files           | .edgelist, .order.npy  | DAWG build/export    |
@@ -84,7 +84,7 @@ Modular, open corpus compression for the LLM era.
 
 You want:
 
-    dumb_pre → cc_nlp (category tokenization) → ngram-pos (replacement) → crux2 BWT+MTF+RLE → final 7z archive.
+    dumb_pre → cc_nlp (category tokenization) → ngram_pos (replacement) → crux2 BWT+MTF+RLE → final 7z archive.
 
     Archive should only include the minimal files needed for a lossless reverse.
 
@@ -230,6 +230,11 @@ dumb.7z:
 
 enwik5 directly on 7z:
 33,1 kB (33057 bytes)
+
+for pruned and 2-grams
+34,2 kB (34250 bytes) ?? 31,4 kB (31439 bytes)
+
+!TODO: needs assert reversability and prune uniqs 
 
 ---
 

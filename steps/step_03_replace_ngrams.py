@@ -6,7 +6,7 @@ def step_replace_ngrams(config, infile, ccnlp_out, ngrams_db, min_freq=None, sta
     output_folder = config['output_folder']
     replaced_dir = os.path.join(output_folder, infile, "04_replaced")
     ensure_dirs(replaced_dir)
-    script = os.path.join(modules_dir, "ngram-pos", "replace_ngrams.py")
+    script = os.path.join(modules_dir, "ngram_pos", "replace_ngrams.py")
     codebook_txt = os.path.join(output_folder, infile, "03_ngrams", "ngram_used_codebook.txt")
     codebook_npz = os.path.join(output_folder, infile, "03_ngrams", "ngram_used_codebook.npz")
     args = {
