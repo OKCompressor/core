@@ -177,3 +177,25 @@ Reverse (Decompression) Flow
 
 
 
+
+
+
+---
+
+9. Summary TODO Checklist
+
+Use chunked files for archive if present, else flat
+
+Keep naming consistent and minimal
+
+Archive only what’s needed for full reverse (can always regen intermediates)
+
+Write the “auto-pick smallest” logic as a reusable DAG node
+
+Focus next on the GA module for .base4
+
+crux1 wrapper: thin, fast, don’t stall for “perfect”
+
+Document all of this in README/docs
+
+Take a break. Your brain will be sharper after.
