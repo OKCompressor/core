@@ -184,6 +184,8 @@ Reverse (Decompression) Flow
 
 9. Summary TODO Checklist
 
+Add modules repo downloader for all steps like in pipe.py _legacy
+
 Use chunked files for archive if present, else flat
 
 Keep naming consistent and minimal
