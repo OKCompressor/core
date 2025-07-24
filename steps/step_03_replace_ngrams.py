@@ -1,4 +1,4 @@
-from utils import run_python_module, ensure_dirs
+from utils import run_python_module, ensure_dirs, flatten_file_with_sentinel
 import os
 
 def step_replace_ngrams(config, infile, ccnlp_out, ngrams_db):
@@ -20,4 +20,16 @@ def step_replace_ngrams(config, infile, ccnlp_out, ngrams_db):
         "pattern": "sub_idxs_*.npy"
     }
     run_python_module(script, args)
-    return {"replaced_dir": replaced_dir, "codebook_txt": codebook_txt, "codebook_npz": codebook_npz}
+
+    # Flatten codebook here (output as .flat.txt for later BWT etc)
+    codebook_flat = codebook_txt.replace('.txt', '.flat.txt')
+    sentinel = config.get("sentinel", "-1")
+    flatten_file_with_sentinel(codebook_txt, codebook_flat, sentinel=sentinel)
+    print(f"[Luna] Flattened codebook: {codebook_txt} → {codebook_flat}")
+
+    return {
+        "replaced_dir": replaced_dir,
+        "codebook_txt": codebook_txt,
+        "codebook_flat": codebook_flat,
+        "codebook_npz": codebook_npz
+    }
