@@ -198,6 +198,98 @@ Focus next on the GA module for .base4
 
 crux1 wrapper: thin, fast, don’t stall for “perfect”
 
+! implement/add the 2-grams to core !!
+! Prune the dicts after the replace_ngrams usage
+
 Document all of this in README/docs
 
 Take a break. Your brain will be sharper after.
+
+===
+
+Best path yet:
+
+dicts (8x cat*) not procced further after ccnlp
+ngram_used_codebook.txt.7z
+base4 --> to be GA 
+subidx*.npy
+
+BWT and other transforms in crux2 yielded negative results probly for capped hw limits on the dev box, like chunk 10k max to prevent Out Of Mem
+
+
+**the following tables is w aggregates down to 3 only :: 
+
+!!! needs updates after implement/add the 2-grams to core !!!
+
+full pipe +7z:
+enwik 5: 44,4 kB (44377 bytes)
+runtime < 2 mins
+
+dumb.7z:
+39,7 kB (39667 bytes)
+
+enwik5 directly on 7z:
+33,1 kB (33057 bytes)
+
+---
+
+enwik6:
+full pipe 
+386 kb
+
+dumb.7z
+dict.7z 75.8 + out_ids.7z 254.8 kb =
+330.4 kb
+
+enwik6.7z:
+290,8 kB (290753 bytes)
+
+---
+
+
+
+---
+
+*PS: Code marked with [Luna] has be done by AI with hard reqs/specs human dev in the loop
+
+
+---
+
+## Quickstart
+
+Install dependencies:
+
+```bash
+# Python 3.11+ recommended; PyPy optional for speed
+pip install -r requirements.txt
+# Or, for max speed:
+pypy3 -m pip install -r requirements.txt
+
+# If using Rust modules (experimental, for redumb/rengrams):
+cargo build --release
+
+Run the pipeline:
+
+cd core
+python main.py config.yaml
+# Or, for PyPy:
+pypy3 main.py config.yaml
+
+Outputs will appear in output/{your_corpus}/99_dicts_final/.
+
+---
+
+- **Tag as:**  
+  `v0.3-minimal-pipeline`
+- **Roadmap:**
+    - DAG orchestrator (auto-pick best step)
+    - GA module for .base4
+    - crux1 wrapper (thin, fast, “classic” BWT)
+    - Empirical benchmarks auto-logged to /output/bench/
+    - Document reverse pipeline scripts as they land
+
+    - Handle as simple_ 2-gram step if >len than dict entry
+    - bench and pLM modules drafts
+
+---
+

@@ -7,7 +7,7 @@ do_bwt: true
 do_mtf: true
 do_rle: true
 
-chunk_size: 10000
+chunk_size: 1000000
 input_files:
   - enwik5
 
@@ -20,8 +20,18 @@ repos:
   crux2: git@github.com:GreenIshHat/crux2.git
   core: git@github.com:OKCompressor/core.git
 
-ngram:
-  n_max: 13
-  n_min: 3
-  min_freq: 7
-  start_code: 1000000
+# ngram:
+#   n_max: 13
+#   n_min: 3
+#   min_freq: 7
+#   start_code: 1000000
+
+ngram_passes:
+  - { n_max: 13, n_min: 4, min_freq: 7, start_code: 1000000 }   # First pass: high to mid n-grams
+  - { n_max: 3, n_min: 2, min_freq: 7, start_code: 2000000 }    # Second pass: short n-grams
+
+
+
+
+
+dict_prune: true

@@ -10,7 +10,7 @@ CHUNK_SIZE = 10000
 
 MOD_DIR = "modules"
 INPUT_FOLDER = "data"
-INPUT_FILES = ["enwik5"]  # Edit as needed
+INPUT_FILES = ["enwik6"]  # Edit as needed
 
 os.makedirs(MOD_DIR, exist_ok=True)
 os.makedirs(INPUT_FOLDER, exist_ok=True)
