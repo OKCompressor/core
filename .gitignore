@@ -3,5 +3,5 @@ output*/
 data/
 *.dboutput/
 output/
-
+__pycache__/
 ngram_used_codebook.txt

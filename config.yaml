@@ -1,0 +1,27 @@
+modules_dir: "modules"
+input_folder: "data"
+output_folder: "output"
+
+cleanup_tmp: true
+do_bwt: true
+do_mtf: true
+do_rle: true
+
+chunk_size: 10000
+input_files:
+  - enwik5
+
+repos:
+  dumb_pre: git@github.com:OKCompressor/dumb_pre.git
+  redumb: git@github.com:OKCompressor/redumb.git
+  ngram-pos: git@github.com:GreenIshHat/ngram-pos.git
+  cc_nlp: git@github.com:GreenIshHat/cc_nlp.git
+  ngram-dawg: git@github.com:GreenIshHat/ngram-dawg.git
+  crux2: git@github.com:GreenIshHat/crux2.git
+  core: git@github.com:OKCompressor/core.git
+
+ngram:
+  n_max: 13
+  n_min: 3
+  min_freq: 7
+  start_code: 1000000
