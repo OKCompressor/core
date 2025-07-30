@@ -1,11 +1,16 @@
-> ⚠️ **disclaimer:**  
-> This is a personal, R&D project—code is *raw*, modules come and go,  
-> and half the repo is notes-to-self or just “backed up” to git.  
-> Don’t expect pro docs, stable APIs, or code etiquette yet.  
->  
-> Use, fork, remix, or rage-quit at will.  
-> PRs are cool if you dare—just know what you’re getting into.  
+> ⚠️ **dev/scene disclaimer:**  
+> This is a personal, in-progress R&D compression playground.  
+> Code, modules, and docs are **messy**, **fluid**, and often “notes to self.”  
+> 
+> **Some submodules are private, drafts or WIP (experimental)—not all code is open right now.**  
+> Occasionally, Rust executables or binaries may be dropped in to speed up bottlenecks.  
+> (If you’re interested in the Rust routines, or need a private alpha, reach out and maybe I’ll share.)
+> 
+> No production support, no guarantees—this repo is “backup-first,” not “release-ready.”  
+> 
+> Fork, hack, or lurk at your own risk. PRs welcome but bring patience!
 
+---
 
 # OKCompressor Core
 
