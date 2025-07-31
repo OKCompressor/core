@@ -215,9 +215,11 @@ crux1 wrapper: thin, fast, don’t stall for “perfect”
 ! implement/add the 2-grams to core !!
 ! Prune the dicts after the replace_ngrams usage
 
-Document all of this in README/docs
+!! Document all of this in README/docs -> Split docs into README (clean), docs/dev_notes (raw), /docs/current_pipeline (best stable flow yet).
 
-Take a break. Your brain will be sharper after.
+---
+
+*Take a break. Your brain will be sharper after.*
 
 ===
 
