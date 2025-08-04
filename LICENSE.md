@@ -17,3 +17,4 @@ This project is released under the **Luna Copyleft modified License v1.0**.
 
 ---
 
+[![License: Luna Copyleft](https://img.shields.io/badge/license-Luna--Copyleft--1.0-blueviolet)](./LICENSE.txt)
