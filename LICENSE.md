@@ -1,11 +1,19 @@
- # LICENSE NOTE (For all future repos by Luna/GreenishHat/bMind stack)
+ # LICENSE NOTE 
+(In abscence of license in any OKCompressor repo this will apply by default to all future repos)
 
-    Clear terms: Luna Copyleft
 
-        Free for all personal, research, education use.
+## 🌓 Luna Copyleft License v1.0
 
-        Paid license required for commercial/corporate/integrator use (see LICENSE.md for tiers).
+This project is released under the **Luna Copyleft modified License v1.0**.
 
-        Contribute, fork, remix—always attribute original author/project.
+- ✅ **Free to use, modify, and share** — for **non-commercial** and **non-profit** purposes
+- 🔁 **Mandatory share-alike** — all derivatives carry this same license
+- 🔒 **Patent retaliation clause** — sue, and you lose your rights
+- 💼 **Commercial use requires direct agreement** with the author
 
-        Want to build a business around this? DM for fair-use, open-core collab.
+📄 Full license: [docs/LICENSE.md](docs/LICENSE.md)  
+
+> "Freedom without exploitation."
+
+---
+
